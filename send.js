@@ -3,6 +3,7 @@ import { createTxRaw } from "@quarix/proto";
 import { TypedDataUtils } from "@metamask/eth-sig-util";
 import { App, CosmosTxV1Beta1BroadcastMode, generatePostBodyBroadcast } from "@quarix/provider";
 import { ethToQuarix } from "@quarix/address-converter";
+import * as dotenv from "dotenv";
 import KmsSigner from "./kms-signer.js";
 
 const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms") => {
@@ -22,15 +23,18 @@ const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms
 
 (async () => {
   try {
-    // UPDATE YOU KMS PARAMS
+    dotenv.config();
+
+    // UPDATE YOU KMS PARAMS IN .env FIlE
+    const { KEY_ID, ACCESS_KEY_ID, SECRET_ACCESS_KEY, REGION, API_VERSION, PROVIDER } = process.env;
     const kmsParams = {
-      keyId: "YOU KEY ID",
-      accessKeyId: "YOU ACCESS KEY ID",
-      secretAccessKey: "",
-      region: "",
-      apiVersion: "latest",
+      keyId: KEY_ID,
+      accessKeyId: ACCESS_KEY_ID,
+      secretAccessKey: SECRET_ACCESS_KEY,
+      region: REGION,
+      apiVersion: API_VERSION,
     };
-    const kmsSigner = new KmsSigner(kmsParams);
+    const kmsSigner = new KmsSigner(kmsParams, PROVIDER);
 
     const chain = {
       chainId: 8888888,
@@ -42,6 +46,7 @@ const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms
 
     console.log("kms ethAddress", ethAddress);
     console.log("bech32 address", accountAddress);
+    console.log("publicKey", publicKey);
 
     let sender = {
       accountAddress,

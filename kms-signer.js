@@ -13,6 +13,7 @@ const EcdsaSigAsnParse = asn1.define("EcdsaSig", function () {
 });
 
 export default class KmsSigner {
+  // TODO: provider is not used yet. If you want to send transactions from this class, you can encapsulate it.
   constructor(params, provider) {
     this.keyId = params.keyId;
     this.client = new KMS({
