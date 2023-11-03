@@ -26,10 +26,6 @@ export default class KmsSigner {
     });
   }
 
-  connect(provider) {
-    return new KmsSigner(this.keyId, provider);
-  }
-
   async getAddress() {
     if (this.address) {
       return this.address;
