@@ -1,7 +1,8 @@
 import { BigNumber, utils } from "ethers";
-const { keccak256, recoverAddress, joinSignature, resolveProperties, serializeTransaction, hashMessage, computePublicKey, recoverPublicKey } = utils;
 import { KMS, GetPublicKeyCommand, SignCommand } from "@aws-sdk/client-kms";
 import asn1 from "asn1.js";
+
+const { keccak256, recoverAddress, joinSignature, resolveProperties, serializeTransaction, hashMessage, computePublicKey } = utils;
 
 const EcdsaPubKey = asn1.define("EcdsaPubKey", function () {
   this.seq().obj(this.key("algo").seq().obj(this.key("a").objid(), this.key("b").objid()), this.key("pubKey").bitstr());
@@ -60,9 +61,10 @@ export default class KmsSigner {
   }
 
   async getCompressedPublicKey() {
-    const digest = "658e28647e5dd7dda94a0fb2306f49e466d19d2c5aed865a7fc8a8434dd9b879";
-    const signature = await this.signDigest(digest);
-    const pk = computePublicKey(recoverPublicKey(Buffer.from(digest, "hex"), signature), true);
+    const publicKey = await this._getKmsPublicKey();
+    const res = EcdsaPubKey.decode(publicKey, "der");
+    const pubKeyBuffer = res.pubKey.data;
+    const pk = computePublicKey(pubKeyBuffer, true);
     return pk;
   }
 
