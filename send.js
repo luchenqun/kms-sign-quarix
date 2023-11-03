@@ -43,16 +43,18 @@ const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms
     const ethAddress = await kmsSigner.getAddress();
     const accountAddress = ethToQuarix(ethAddress);
     const publicKey = await kmsSigner.getCompressedPublicKey();
+    const publicKeyBase64 = Buffer.from(publicKey.replace("0x", ""), "hex").toString("base64");
 
     console.log("kms ethAddress", ethAddress);
     console.log("bech32 address", accountAddress);
     console.log("publicKey", publicKey);
+    console.log("base64(publicKey)", publicKeyBase64);
 
     let sender = {
       accountAddress,
       sequence: undefined,
       accountNumber: undefined,
-      pubkey: Buffer.from(publicKey.replace("0x", ""), "hex").toString("base64"),
+      pubkey: publicKeyBase64,
     };
 
     const fee = {
