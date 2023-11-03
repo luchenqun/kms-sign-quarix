@@ -1,4 +1,4 @@
-## OverView
+## Overview
 
 This project demonstrates how to sign an EIP712 type quarix transfer transaction using the AWS KMS service. Since theoretically all quarix transactions can be signed using EIP712, so including transfer transactions, other quarix transactions can also be signed using the KMS service.
 Here is a brief explanation of the two implementation files:
