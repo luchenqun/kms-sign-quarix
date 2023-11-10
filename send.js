@@ -82,7 +82,16 @@ const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms
     sender.accountNumber = account.account.base_account.account_number;
 
     const { base_fee } = await app.feemarket.baseFee();
-    fee.amount = BigNumber.from(gas).mul(BigNumber.from(base_fee || 0)).toString();
+    const feemarketParams = await app.feemarket.params()
+    const minGasPrice = feemarketParams.params.min_gas_price;
+    let gasPrice = BigNumber.from(base_fee || 0)
+    // TODO: If the value of minGasPrice exceeds 2^53-1, there will be a overflow problem here
+    const bigMinGasPrice = BigNumber.from(parseInt(parseFloat(minGasPrice) + 1))
+    if (bigMinGasPrice.gt(gasPrice)) {
+      gasPrice = bigMinGasPrice
+    }
+    fee.amount = gasPrice.mul(gas).toString();
+    // console.log(base_fee, minGasPrice, gasPrice.toString(), fee.amount)
 
     {
       // use eip712 sign msg
