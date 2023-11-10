@@ -3,6 +3,7 @@ import { createTxRaw } from "@quarix/proto";
 import { TypedDataUtils } from "@metamask/eth-sig-util";
 import { App, CosmosTxV1Beta1BroadcastMode, generatePostBodyBroadcast } from "@quarix/provider";
 import { ethToQuarix } from "@quarix/address-converter";
+import { BigNumber } from "ethers";
 import * as dotenv from "dotenv";
 import KmsSigner from "./kms-signer.js";
 
@@ -57,10 +58,11 @@ const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms
       pubkey: publicKeyBase64,
     };
 
-    const fee = {
-      amount: "4000000000000000000",
+    const gas = "1000000";
+    let fee = {
+      amount: undefined,
       denom: "aqare",
-      gas: "2000000",
+      gas,
     };
 
     const memo = "quarixjs test";
@@ -78,6 +80,9 @@ const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms
     const account = await app.auth.account(sender.accountAddress);
     sender.sequence = account.account.base_account.sequence;
     sender.accountNumber = account.account.base_account.account_number;
+
+    const { base_fee } = await app.feemarket.baseFee();
+    fee.amount = BigNumber.from(gas).mul(BigNumber.from(base_fee || 0)).toString();
 
     {
       // use eip712 sign msg
