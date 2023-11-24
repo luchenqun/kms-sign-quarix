@@ -1,8 +1,7 @@
-import { BigNumber, utils } from "ethers";
+// import { BigNumber, utils } from "ethers";
+import {keccak256, recoverAddress, hashMessage, SigningKey, Signature} from "ethers"
 import { KMS, GetPublicKeyCommand, SignCommand } from "@aws-sdk/client-kms";
 import asn1 from "asn1.js";
-
-const { keccak256, recoverAddress, joinSignature, resolveProperties, serializeTransaction, hashMessage, computePublicKey } = utils;
 
 const EcdsaPubKey = asn1.define("EcdsaPubKey", function () {
   this.seq().obj(this.key("algo").seq().obj(this.key("a").objid(), this.key("b").objid()), this.key("pubKey").bitstr());
@@ -42,11 +41,11 @@ export default class KmsSigner {
   }
 
   async signTransaction(transaction) {
-    const unsignedTx = await resolveProperties(transaction);
-    const serializedTx = serializeTransaction(unsignedTx);
-    const hash = Buffer.from(keccak256(serializedTx).slice(2), "hex");
-    const txSig = await this.signDigest(hash);
-    return serializeTransaction(unsignedTx, txSig);
+    // const unsignedTx = await resolveProperties(transaction);
+    // const serializedTx = serializeTransaction(unsignedTx);
+    // const hash = Buffer.from(keccak256(serializedTx).slice(2), "hex");
+    // const txSig = await this.signDigest(hash);
+    // return serializeTransaction(unsignedTx, txSig);
   }
 
   async _getKmsPublicKey() {
@@ -61,7 +60,7 @@ export default class KmsSigner {
     const publicKey = await this._getKmsPublicKey();
     const res = EcdsaPubKey.decode(publicKey, "der");
     const pubKeyBuffer = res.pubKey.data;
-    const pk = computePublicKey(pubKeyBuffer, true);
+    const pk = SigningKey.computePublicKey(pubKeyBuffer, true);
     return pk;
   }
 
@@ -89,8 +88,9 @@ export default class KmsSigner {
     const msg = Buffer.from(digest, "hex");
     const signature = await this._kmsSign(msg);
     const { r, s } = this._getSigRs(signature);
-    const { v } = await this._getSigV(msg, { r, s });
-    const joinedSignature = joinSignature({ r, s, v });
+    // const { v } = await this._getSigV(msg, { r, s });
+    const v = 28
+    const joinedSignature = Signature.from({ r, s, v }).serialized  //joinSignature({ r, s, v });
     return joinedSignature;
   }
 
@@ -110,15 +110,15 @@ export default class KmsSigner {
 
   _getSigRs(signature) {
     const decoded = EcdsaSigAsnParse.decode(signature, "der");
-    let r = BigNumber.from(`0x${decoded.r.toString(16)}`);
-    let s = BigNumber.from(`0x${decoded.s.toString(16)}`);
-    const secp256k1N = BigNumber.from("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
-    const secp256k1halfN = secp256k1N.div(BigNumber.from(2));
-    if (s.gt(secp256k1halfN)) {
-      s = secp256k1N.sub(s);
+    let r = BigInt(`0x${decoded.r.toString(16)}`);
+    let s = BigInt(`0x${decoded.s.toString(16)}`);
+    const secp256k1N = BigInt("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
+    const secp256k1halfN = secp256k1N/(BigInt(2));
+    if (s > secp256k1halfN) {
+      s = secp256k1N - s;
     }
-    r = r.toHexString();
-    s = s.toHexString();
+    r = "0x" + r.toString(16);
+    s = "0x" + s.toString(16);
     return { r, s };
   }
 

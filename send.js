@@ -3,7 +3,6 @@ import { createTxRaw } from "@quarix/proto";
 import { TypedDataUtils } from "@metamask/eth-sig-util";
 import { App, CosmosTxV1Beta1BroadcastMode, generatePostBodyBroadcast } from "@quarix/provider";
 import { ethToQuarix } from "@quarix/address-converter";
-import { BigNumber } from "ethers";
 import * as dotenv from "dotenv";
 import KmsSigner from "./kms-signer.js";
 
@@ -84,13 +83,13 @@ const createTx = async (createTxMsg, context, params, kmsSigner, signType = "kms
     const { base_fee } = await app.feemarket.baseFee();
     const feemarketParams = await app.feemarket.params()
     const minGasPrice = feemarketParams.params.min_gas_price;
-    let gasPrice = BigNumber.from(base_fee || 0)
+    let gasPrice = BigInt(base_fee || 0)
     // TODO: If the value of minGasPrice exceeds 2^53-1, there will be a overflow problem here
-    const bigMinGasPrice = BigNumber.from(parseInt(parseFloat(minGasPrice) + 1))
-    if (bigMinGasPrice.gt(gasPrice)) {
+    const bigMinGasPrice = BigInt(parseInt(parseFloat(minGasPrice) + 1))
+    if (bigMinGasPrice>gasPrice) {
       gasPrice = bigMinGasPrice
     }
-    fee.amount = gasPrice.mul(gas).toString();
+    fee.amount = (gasPrice*BigInt(gas)).toString();
     // console.log(base_fee, minGasPrice, gasPrice.toString(), fee.amount)
 
     {
